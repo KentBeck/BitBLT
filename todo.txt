@@ -6,3 +6,9 @@ Items will be added when you tell me "to do" something.
 1. Draw on the source and see the result interactively
 2. Also check the result
 3. src = dest
+4. SIMD target
+5. auto-test
+6. shift x
+7. shift y
+8. rules
+9. mask
