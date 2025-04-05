@@ -1,3 +1,21 @@
+/**
+ * Reference implementation of BitBLT (Bit Block Transfer)
+ *
+ * This is the baseline implementation that serves as the reference for
+ * correctness. All optimized versions should produce identical results.
+ *
+ * @param {Uint32Array} srcBuffer - Source pixel buffer (32 pixels per Uint32)
+ * @param {number} srcWidth - Width of source buffer in pixels
+ * @param {number} srcHeight - Height of source buffer
+ * @param {number} srcX - X coordinate in source
+ * @param {number} srcY - Y coordinate in source
+ * @param {Uint32Array} dstBuffer - Destination pixel buffer (32 pixels per Uint32)
+ * @param {number} dstWidth - Width of destination buffer in pixels
+ * @param {number} dstX - X coordinate in destination
+ * @param {number} dstY - Y coordinate in destination
+ * @param {number} width - Width of region to copy
+ * @param {number} height - Height of region to copy
+ */
 function bitblt(
   srcBuffer, // source pixel buffer (Uint32Array with 32 pixels per element)
   srcWidth, // width of source buffer in pixels (not Uint32 elements)
@@ -94,3 +112,10 @@ function test() {
 
   return dstBuffer;
 }
+
+// Export the functions
+module.exports = {
+  bitblt,
+  createTestBuffer,
+  test,
+};

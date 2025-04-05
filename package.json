@@ -2,9 +2,11 @@
   "name": "bitblt",
   "version": "1.0.0",
   "description": "Bit Block Transfer (BitBLT) implementation",
-  "main": "src/reference/bitblt.js",
+  "main": "src/bitblt.js",
   "scripts": {
-    "test": "node tests/bitblt.test.js"
+    "test": "node tests/run-tests.js",
+    "test:reference": "node tests/bitblt.test.js",
+    "test:compiler": "node tests/bitblt-compiler.test.js"
   },
   "keywords": [
     "graphics",
