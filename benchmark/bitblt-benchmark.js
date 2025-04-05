@@ -16,7 +16,7 @@ const {
 const { createPattern, patterns } = require("../tests/bitblt-tester");
 
 // Available generator types
-const GENERATOR_TYPES = ["javascript", "wasm"]; // Benchmark both JavaScript and WebAssembly
+const GENERATOR_TYPES = ["javascript", "wasm", "zero-copy-wasm"]; // Benchmark all generator types
 
 // Test configurations
 const TEST_CONFIGS = [

@@ -501,4 +501,4 @@ class WASMGenerator extends Generator {
   }
 }
 
-module.exports = WASMGenerator;
+module.exports = { WASMGenerator };
