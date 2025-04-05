@@ -34,7 +34,7 @@ async function runGeneratorProfile() {
   ];
 
   // Generator types to test
-  const generatorTypes = ["javascript", "wasm"];
+  const generatorTypes = ["javascript"]; // Only test JavaScript for now
 
   // Disable verification for benchmarking
   const bitbltConfig = require("../src/bitblt").config;

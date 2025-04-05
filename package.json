@@ -10,7 +10,7 @@
     "benchmark": "node benchmark/run-benchmark.js",
     "benchmark:shared": "node benchmark/shared-buffer-benchmark.js",
     "profile:generation": "node benchmark/run-generation-vs-execution.js",
-    "profile:js": "node benchmark/run-js-profile.js"
+    "profile:generator": "node benchmark/run-generator-profile.js"
   },
   "keywords": [
     "graphics",
