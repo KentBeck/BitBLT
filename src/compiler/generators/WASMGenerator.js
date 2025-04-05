@@ -77,9 +77,10 @@ class WASMGenerator extends Generator {
   /**
    * Compile the generated WebAssembly code
    * @param {Object} params - Parameters for the BitBLT operation
+   * @param {Object} importObject - Optional import object for WebAssembly
    * @returns {Function} - A callable function that performs the BitBLT operation
    */
-  async compile(params) {
+  async compile(params, importObject = null) {
     await this.initialize();
 
     const cacheKey = this.getCacheKey(params);
@@ -96,11 +97,24 @@ class WASMGenerator extends Generator {
       // Compile the WebAssembly module
       const module = await WebAssembly.compile(wasmBinary);
 
-      // Instantiate the module
-      const instance = await WebAssembly.instantiate(module);
+      // Create default import object if none provided
+      if (!importObject) {
+        importObject = {
+          env: {
+            memory: new WebAssembly.Memory({ initial: 1 }),
+          },
+        };
+      }
+
+      // Instantiate the module with the import object
+      const instance = await WebAssembly.instantiate(module, importObject);
 
       // Get the exported function
       const bitbltFunction = instance.exports.bitblt;
+
+      // Store the memory and instance with the function
+      bitbltFunction.memory = importObject.env.memory;
+      bitbltFunction.instance = instance;
 
       // Cache the compiled function
       this.compiledModules.set(cacheKey, bitbltFunction);
@@ -212,29 +226,40 @@ class WASMGenerator extends Generator {
     }
 
     try {
-      // Compile the WebAssembly function
-      const bitbltFunction = await this.compile(params);
-
-      // Create a memory view for the WebAssembly module
-      const memory = bitbltFunction.memory;
+      // Create a shared memory for WebAssembly to access JavaScript buffers directly
+      const memory = new WebAssembly.Memory({ initial: 1 });
       const memoryView = new Uint32Array(memory.buffer);
 
-      // Copy source buffer to WebAssembly memory
-      const srcOffset = 0;
-      memoryView.set(srcBuffer, srcOffset);
+      // Create import object with the shared memory
+      const importObject = {
+        env: {
+          memory: memory,
+        },
+      };
 
-      // Copy destination buffer to WebAssembly memory
-      const dstOffset = srcBuffer.length;
-      memoryView.set(dstBuffer, dstOffset);
+      // Compile the WebAssembly function with the shared memory
+      const bitbltFunction = await this.compile(params, importObject);
 
-      // Call the WebAssembly function
+      // Get direct pointers to the source and destination buffers
+      // Note: In a real implementation, we would need to ensure these buffers
+      // are properly aligned and accessible to WebAssembly. For simplicity,
+      // we're using offsets into our shared memory.
+      const srcBufferPtr = 0;
+      const dstBufferPtr = srcBuffer.length;
+
+      // Copy source and destination buffers to shared memory
+      // In a more optimized implementation, we would use direct buffer references
+      memoryView.set(srcBuffer, srcBufferPtr);
+      memoryView.set(dstBuffer, dstBufferPtr);
+
+      // Call the WebAssembly function with buffer pointers
       bitbltFunction(
-        srcOffset,
+        srcBufferPtr,
         srcWidth,
         srcHeight,
         srcX,
         srcY,
-        dstOffset,
+        dstBufferPtr,
         dstWidth,
         dstX,
         dstY,
@@ -242,9 +267,10 @@ class WASMGenerator extends Generator {
         height
       );
 
-      // Copy the result back from WebAssembly memory
+      // Copy the result back from shared memory to the destination buffer
+      // In a more optimized implementation, this copy would be unnecessary
       for (let i = 0; i < dstBuffer.length; i++) {
-        dstBuffer[i] = memoryView[dstOffset + i];
+        dstBuffer[i] = memoryView[dstBufferPtr + i];
       }
 
       return dstBuffer;

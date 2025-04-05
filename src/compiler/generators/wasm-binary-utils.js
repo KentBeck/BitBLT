@@ -1,6 +1,6 @@
 /**
  * WebAssembly Binary Utilities
- * 
+ *
  * Utilities for generating WebAssembly binary format directly.
  */
 
@@ -19,7 +19,7 @@ function encodeULEB128(value) {
     }
     bytes.push(byte);
   } while (value !== 0);
-  
+
   return new Uint8Array(bytes);
 }
 
@@ -31,22 +31,24 @@ function encodeULEB128(value) {
 function encodeSLEB128(value) {
   const bytes = [];
   let more = true;
-  
+
   while (more) {
     let byte = value & 0x7f;
     value >>= 7;
-    
+
     // Sign bit of byte is second high order bit (0x40)
-    if ((value === 0 && (byte & 0x40) === 0) || 
-        (value === -1 && (byte & 0x40) !== 0)) {
+    if (
+      (value === 0 && (byte & 0x40) === 0) ||
+      (value === -1 && (byte & 0x40) !== 0)
+    ) {
       more = false;
     } else {
       byte |= 0x80;
     }
-    
+
     bytes.push(byte);
   }
-  
+
   return new Uint8Array(bytes);
 }
 
@@ -59,11 +61,11 @@ function encodeSLEB128(value) {
 function createSection(id, content) {
   const sizeBytes = encodeULEB128(content.length);
   const result = new Uint8Array(1 + sizeBytes.length + content.length);
-  
+
   result[0] = id;
   result.set(sizeBytes, 1);
   result.set(content, 1 + sizeBytes.length);
-  
+
   return result;
 }
 
@@ -75,16 +77,16 @@ function createSection(id, content) {
 function concatUint8Arrays(arrays) {
   // Calculate total length
   const totalLength = arrays.reduce((acc, arr) => acc + arr.length, 0);
-  
+
   // Create new array and copy data
   const result = new Uint8Array(totalLength);
   let offset = 0;
-  
+
   for (const arr of arrays) {
     result.set(arr, offset);
     offset += arr.length;
   }
-  
+
   return result;
 }
 
@@ -101,27 +103,27 @@ const Opcodes = {
   BR: 0x0c,
   BR_IF: 0x0d,
   RETURN: 0x0f,
-  
+
   // Call operators
   CALL: 0x10,
-  
+
   // Parametric operators
   DROP: 0x1a,
-  
+
   // Variable access
   LOCAL_GET: 0x20,
   LOCAL_SET: 0x21,
   LOCAL_TEE: 0x22,
   GLOBAL_GET: 0x23,
   GLOBAL_SET: 0x24,
-  
+
   // Memory operators
   I32_LOAD: 0x28,
   I32_STORE: 0x36,
-  
+
   // Constants
   I32_CONST: 0x41,
-  
+
   // Numeric operators
   I32_EQZ: 0x45,
   I32_EQ: 0x46,
@@ -134,7 +136,7 @@ const Opcodes = {
   I32_LE_U: 0x4d,
   I32_GE_S: 0x4e,
   I32_GE_U: 0x4f,
-  
+
   // Arithmetic
   I32_ADD: 0x6a,
   I32_SUB: 0x6b,
@@ -168,6 +170,7 @@ const ValueType = {
  */
 const SectionId = {
   TYPE: 1,
+  IMPORT: 2,
   FUNCTION: 3,
   MEMORY: 5,
   EXPORT: 7,
@@ -181,5 +184,5 @@ module.exports = {
   concatUint8Arrays,
   Opcodes,
   ValueType,
-  SectionId
+  SectionId,
 };
