@@ -1,0 +1,17 @@
+{
+  "name": "bitblt",
+  "version": "1.0.0",
+  "description": "Bit Block Transfer (BitBLT) implementation",
+  "main": "src/reference/bitblt.js",
+  "scripts": {
+    "test": "node tests/bitblt.test.js"
+  },
+  "keywords": [
+    "graphics",
+    "bitblt",
+    "bit",
+    "manipulation"
+  ],
+  "author": "Kent Beck",
+  "license": "MIT"
+}
