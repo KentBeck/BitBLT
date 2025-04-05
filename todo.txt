@@ -1,0 +1,8 @@
+# Todo List
+
+This file contains tasks that need to be completed for the BitBLT project.
+Items will be added when you tell me "to do" something.
+
+1. Draw on the source and see the result interactively
+2. Also check the result
+3. src = dest

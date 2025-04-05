@@ -1,0 +1,40 @@
+to <!DOCTYPE html>
+<html>
+<body>
+    <canvas id="canvas" width="400" height="400"></canvas>
+    <script src="bitblt.js"></script>
+    <script>
+        // Create source pattern - checkerboard
+        const srcSize = 64;
+        const srcBuffer = new Uint32Array(srcSize * srcSize);
+        for (let y = 0; y < srcSize; y++) {
+            for (let x = 0; x < srcSize; x++) {
+                srcBuffer[y * srcSize + x] = ((x ^ y) & 8) ? 0xFF0000FF : 0xFFFFFFFF;
+            }
+        }
+
+        // Create destination buffer
+        const dstSize = 400;
+        const dstBuffer = new Uint32Array(dstSize * dstSize);
+
+        // Perform BitBLT
+        bitblt(
+            srcBuffer, srcSize, srcSize,
+            0, 0,                    // source x, y
+            dstBuffer, dstSize,      // dest buffer and width
+            50, 50,                  // dest x, y
+            64, 64                   // width, height
+        );
+
+        // Display result
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const imageData = new ImageData(
+            new Uint8ClampedArray(dstBuffer.buffer),
+            dstSize,
+            dstSize
+        );
+        ctx.putImageData(imageData, 0, 0);
+    </script>
+</body>
+</html>
