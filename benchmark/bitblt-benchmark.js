@@ -26,10 +26,18 @@ const TEST_CONFIGS = [
   { width: 128, height: 128, name: "Medium (128x128)" },
   // Large buffers
   { width: 512, height: 512, name: "Large (512x512)" },
+  // XL buffers
+  { width: 1024, height: 1024, name: "XL (1024x1024)" },
+  // XXL buffers
+  { width: 2048, height: 2048, name: "XXL (2048x2048)" },
   // Wide buffers
   { width: 1024, height: 64, name: "Wide (1024x64)" },
   // Tall buffers
   { width: 64, height: 1024, name: "Tall (64x1024)" },
+  // Extra wide buffers
+  { width: 4096, height: 32, name: "Extra Wide (4096x32)" },
+  // Extra tall buffers
+  { width: 32, height: 4096, name: "Extra Tall (32x4096)" },
   // Word-aligned
   { width: 32, height: 32, srcX: 0, dstX: 0, name: "Word-aligned (32x32)" },
   // Non-aligned
@@ -181,7 +189,15 @@ async function runAllBenchmarks() {
   console.log();
 
   const results = [];
-  const iterations = 20;
+
+  // Adjust iterations based on image size to prevent excessive runtime
+  const getIterations = (width, height) => {
+    const pixels = width * height;
+    if (pixels > 4000000) return 5; // For very large images (>4M pixels)
+    if (pixels > 1000000) return 10; // For large images (>1M pixels)
+    if (pixels > 250000) return 15; // For medium-large images (>250K pixels)
+    return 20; // For smaller images
+  };
 
   // Check if SharedArrayBuffer is available
   const hasSharedArrayBuffer = typeof SharedArrayBuffer !== "undefined";
@@ -198,6 +214,9 @@ async function runAllBenchmarks() {
 
     // Run benchmarks for each configuration
     for (const config of TEST_CONFIGS) {
+      // Determine iterations based on image size
+      const iterations = getIterations(config.width, config.height);
+
       // Run benchmarks for each pattern
       for (const patternInfo of TEST_PATTERNS) {
         process.stdout.write(`  ${config.name}, ${patternInfo.name}... `);
@@ -212,7 +231,9 @@ async function runAllBenchmarks() {
           results.push(result);
 
           process.stdout.write(
-            `${formatNumber(result.avgPixelsPerMicro)} pixels/μs\n`
+            `${formatNumber(
+              result.avgPixelsPerMicro
+            )} pixels/μs (${iterations} iterations)\n`
           );
         } catch (err) {
           process.stdout.write(`ERROR: ${err.message}\n`);
@@ -303,54 +324,74 @@ async function runAllBenchmarks() {
     console.log("=================================");
     console.log();
 
-    // Create buffers using SharedArrayBuffer
-    const width = 256;
-    const height = 256;
-    const bufferSize = Math.ceil((width * height) / 32);
+    // Create buffers using SharedArrayBuffer for different sizes
+    const sizes = [
+      { width: 256, height: 256, name: "256x256" },
+      { width: 1024, height: 1024, name: "1024x1024" },
+      { width: 2048, height: 2048, name: "2048x2048" },
+    ];
 
-    // Create SharedArrayBuffers
-    const sharedSrcBuffer = new SharedArrayBuffer(bufferSize * 4);
-    const sharedDstBuffer = new SharedArrayBuffer(bufferSize * 4);
+    // Test each size
+    for (const { width, height, name } of sizes) {
+      console.log(`\nTesting SharedArrayBuffer with ${name}:`);
+      const bufferSize = Math.ceil((width * height) / 32);
 
-    // Create views
-    const srcBuffer = new Uint32Array(sharedSrcBuffer);
-    const dstBuffer = new Uint32Array(sharedDstBuffer);
+      // Create SharedArrayBuffers
+      const sharedSrcBuffer = new SharedArrayBuffer(bufferSize * 4);
+      const sharedDstBuffer = new SharedArrayBuffer(bufferSize * 4);
 
-    // Fill source buffer with pattern
-    createPattern(srcBuffer, width, height, patterns.checkerboard);
+      // Create views
+      const srcBuffer = new Uint32Array(sharedSrcBuffer);
+      const dstBuffer = new Uint32Array(sharedDstBuffer);
 
-    // Set generator type to WASM
-    setGeneratorType("wasm");
+      // Fill source buffer with pattern
+      createPattern(srcBuffer, width, height, patterns.checkerboard);
 
-    // Run benchmark
-    console.log("Running SharedArrayBuffer benchmark...");
+      // Set generator type to WASM
+      setGeneratorType("zero-copy-wasm");
 
-    const startTime = process.hrtime.bigint();
+      // Run benchmark
+      console.log("Running SharedArrayBuffer benchmark...");
 
-    await bitblt(
-      srcBuffer,
-      width,
-      height,
-      0,
-      0,
-      dstBuffer,
-      width,
-      0,
-      0,
-      width,
-      height
-    );
+      // Determine iterations based on image size
+      const iterations = getIterations(width, height);
+      let totalElapsedMicros = 0;
 
-    const endTime = process.hrtime.bigint();
-    const elapsedNanos = Number(endTime - startTime);
-    const elapsedMicros = elapsedNanos / 1000;
+      // Run multiple iterations for more accurate results
+      for (let i = 0; i < iterations; i++) {
+        const startTime = process.hrtime.bigint();
 
-    const totalPixels = width * height;
-    const pixelsPerMicro = totalPixels / elapsedMicros;
+        await bitblt(
+          srcBuffer,
+          width,
+          height,
+          0,
+          0,
+          dstBuffer,
+          width,
+          0,
+          0,
+          width,
+          height
+        );
 
-    console.log(
-      `SharedArrayBuffer performance: ${formatNumber(pixelsPerMicro)} pixels/μs`
-    );
+        const endTime = process.hrtime.bigint();
+        const elapsedNanos = Number(endTime - startTime);
+        const elapsedMicros = elapsedNanos / 1000;
+        totalElapsedMicros += elapsedMicros;
+      }
+
+      const avgElapsedMicros = totalElapsedMicros / iterations;
+      const totalPixels = width * height;
+      const pixelsPerMicro = totalPixels / avgElapsedMicros;
+
+      console.log(
+        `SharedArrayBuffer performance: ${formatNumber(
+          pixelsPerMicro
+        )} pixels/μs (${iterations} iterations)`
+      );
+    } // End of sizes loop
+
     console.log();
   }
 }
