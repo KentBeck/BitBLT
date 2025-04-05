@@ -18,9 +18,10 @@ const {
  * Generate a WebAssembly binary module for BitBLT
  *
  * @param {Object} options - Compilation options
+ * @param {boolean} shared - Whether to use shared memory
  * @returns {Uint8Array} - The WebAssembly binary module
  */
-function generateWasmBitBLTModule(options = {}) {
+function generateWasmBitBLTModule(options = {}, shared = false) {
   // WASM module sections
   const sections = [];
 
@@ -41,7 +42,7 @@ function generateWasmBitBLTModule(options = {}) {
   sections.push(typeSection);
 
   // Create import section for memory
-  const importSection = createImportSection();
+  const importSection = createImportSection(shared);
   sections.push(importSection);
 
   // Create function section (function declarations)
@@ -112,9 +113,10 @@ function createFunctionSection() {
 
 /**
  * Create the import section for memory
+ * @param {boolean} shared - Whether to use shared memory
  * @returns {Uint8Array} - The import section
  */
-function createImportSection() {
+function createImportSection(shared = false) {
   // Count of imports
   const count = encodeULEB128(1);
 
@@ -124,7 +126,16 @@ function createImportSection() {
   const fieldNameLen = encodeULEB128(6); // "memory" length
   const fieldName = new Uint8Array([0x6d, 0x65, 0x6d, 0x6f, 0x72, 0x79]); // "memory"
   const importType = new Uint8Array([0x02]); // memory import
-  const limits = new Uint8Array([0x03, 0x01, 0x10]); // 0x03 = shared memory with max, 0x01 = min pages, 0x10 = max pages (16)
+
+  // Memory limits
+  let limits;
+  if (shared) {
+    // Shared memory with max (required for shared memory)
+    limits = new Uint8Array([0x03, 0x01, 0x10]); // 0x03 = shared memory with max, 0x01 = min pages, 0x10 = max pages (16)
+  } else {
+    // Regular memory with max
+    limits = new Uint8Array([0x01, 0x01, 0x10]); // 0x01 = memory with max, 0x01 = min pages, 0x10 = max pages (16)
+  }
 
   // Combine all parts
   const importContent = concatUint8Arrays([

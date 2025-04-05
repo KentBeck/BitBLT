@@ -38,12 +38,15 @@ class WASMGenerator extends Generator {
    * @param {Object} params - Parameters for code generation
    * @returns {Uint8Array} - WebAssembly binary module
    */
-  generate(params) {
+  generate(params, shared = false) {
     // Generate a WebAssembly binary module
-    return generateWasmBitBLTModule({
-      ...this.options,
-      ...params,
-    });
+    return generateWasmBitBLTModule(
+      {
+        ...this.options,
+        ...params,
+      },
+      shared
+    );
   }
 
   /**
@@ -78,9 +81,10 @@ class WASMGenerator extends Generator {
    * Compile the generated WebAssembly code
    * @param {Object} params - Parameters for the BitBLT operation
    * @param {Object} importObject - Optional import object for WebAssembly
+   * @param {Uint8Array} wasmBinary - Optional pre-generated WebAssembly binary
    * @returns {Function} - A callable function that performs the BitBLT operation
    */
-  async compile(params, importObject = null) {
+  async compile(params, importObject = null, wasmBinary = null) {
     await this.initialize();
 
     const cacheKey = this.getCacheKey(params);
@@ -90,8 +94,10 @@ class WASMGenerator extends Generator {
       return this.compiledModules.get(cacheKey);
     }
 
-    // Generate the WebAssembly binary module
-    const wasmBinary = this.generate(params);
+    // Generate the WebAssembly binary module if not provided
+    if (!wasmBinary) {
+      wasmBinary = this.generate(params);
+    }
 
     try {
       // Compile the WebAssembly module
@@ -340,8 +346,15 @@ class WASMGenerator extends Generator {
         },
       };
 
+      // Generate WASM with shared memory flag
+      const wasmBinary = this.generate(params, true);
+
       // Compile the WebAssembly function with the shared memory
-      const bitbltFunction = await this.compile(params, importObject);
+      const bitbltFunction = await this.compile(
+        params,
+        importObject,
+        wasmBinary
+      );
 
       // Create views of the source and destination buffers
       const wasmMemory = new Uint32Array(memory.buffer);
@@ -433,8 +446,15 @@ class WASMGenerator extends Generator {
         },
       };
 
-      // Compile the WebAssembly function with the shared memory
-      const bitbltFunction = await this.compile(params, importObject);
+      // Generate WASM with regular memory (not shared)
+      const wasmBinary = this.generate(params, false);
+
+      // Compile the WebAssembly function with regular memory
+      const bitbltFunction = await this.compile(
+        params,
+        importObject,
+        wasmBinary
+      );
 
       // Get direct pointers to the source and destination buffers
       const srcBufferPtr = 0;
