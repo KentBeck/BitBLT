@@ -6,7 +6,9 @@
   "scripts": {
     "test": "node tests/run-tests.js",
     "test:reference": "node tests/bitblt.test.js",
-    "test:compiler": "node tests/bitblt-compiler.test.js"
+    "test:compiler": "node tests/bitblt-compiler.test.js",
+    "benchmark": "node benchmark/run-benchmark.js",
+    "benchmark:shared": "node benchmark/shared-buffer-benchmark.js"
   },
   "keywords": [
     "graphics",

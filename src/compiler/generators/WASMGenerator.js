@@ -329,7 +329,7 @@ class WASMGenerator extends Generator {
 
       const memory = new WebAssembly.Memory({
         initial: memoryPages,
-        maximum: memoryPages,
+        maximum: Math.max(memoryPages, 16), // Maximum of 16 pages (1MB) or what we need
         shared: true,
       });
 
@@ -419,8 +419,11 @@ class WASMGenerator extends Generator {
     try {
       console.log("Using standard WebAssembly execution with copying");
 
-      // Create a shared memory for WebAssembly to access JavaScript buffers directly
-      const memory = new WebAssembly.Memory({ initial: 1 });
+      // Create a memory for WebAssembly to access JavaScript buffers directly
+      const memory = new WebAssembly.Memory({
+        initial: 1,
+        maximum: 16, // Maximum of 16 pages (1MB)
+      });
       const memoryView = new Uint32Array(memory.buffer);
 
       // Create import object with the shared memory

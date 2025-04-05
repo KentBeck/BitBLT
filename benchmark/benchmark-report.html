@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BitBLT Performance Benchmark</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    h1, h2 {
+      color: #333;
+    }
+    .chart-container {
+      margin-bottom: 40px;
+      height: 400px;
+    }
+    .raw-output {
+      background-color: #f5f5f5;
+      padding: 15px;
+      border-radius: 5px;
+      white-space: pre-wrap;
+      font-family: monospace;
+      overflow-x: auto;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin-bottom: 20px;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: left;
+    }
+    th {
+      background-color: #f2f2f2;
+    }
+    tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+  </style>
+</head>
+<body>
+  <h1>BitBLT Performance Benchmark</h1>
+  
+  <h2>Performance Comparison (pixels per microsecond)</h2>
+  <div class="chart-container">
+    <canvas id="performanceChart"></canvas>
+  </div>
+  
+  <h2>WASM/JS Performance Ratio</h2>
+  <div class="chart-container">
+    <canvas id="ratioChart"></canvas>
+  </div>
+  
+  <h2>Results Table</h2>
+  <table>
+    <tr>
+      <th>Configuration</th>
+      <th>Pattern</th>
+      <th>JavaScript (pixels/μs)</th>
+      <th>WebAssembly (pixels/μs)</th>
+      <th>WASM/JS Ratio</th>
+    </tr>
+    
+  </table>
+  
+  <h2>Raw Benchmark Output</h2>
+  <div class="raw-output">BitBLT Performance Benchmark
+===========================
+
+SharedArrayBuffer is available
+
+Testing JAVASCRIPT generator...
+  Small (32x32), Checkerboard... 15.3 pixels/μs
+  Small (32x32), Horizontal Lines... 145.85 pixels/μs
+  Small (32x32), Vertical Lines... 162.02 pixels/μs
+  Small (32x32), Diagonal Lines... 157.35 pixels/μs
+  Medium (128x128), Checkerboard... 386.5 pixels/μs
+  Medium (128x128), Horizontal Lines... 541.29 pixels/μs
+  Medium (128x128), Vertical Lines... 526.87 pixels/μs
+  Medium (128x128), Diagonal Lines... 557.11 pixels/μs
+  Large (512x512), Checkerboard... 673.23 pixels/μs
+  Large (512x512), Horizontal Lines... 670.75 pixels/μs
+  Large (512x512), Vertical Lines... 665.52 pixels/μs
+  Large (512x512), Diagonal Lines... 655.51 pixels/μs
+  Wide (1024x64), Checkerboard... 595.74 pixels/μs
+  Wide (1024x64), Horizontal Lines... 657.28 pixels/μs
+  Wide (1024x64), Vertical Lines... 684.64 pixels/μs
+  Wide (1024x64), Diagonal Lines... 676.1 pixels/μs
+  Tall (64x1024), Checkerboard... 570.03 pixels/μs
+  Tall (64x1024), Horizontal Lines... 622.05 pixels/μs
+  Tall (64x1024), Vertical Lines... 643.99 pixels/μs
+  Tall (64x1024), Diagonal Lines... 582.49 pixels/μs
+  Word-aligned (32x32), Checkerboard... 130.81 pixels/μs
+  Word-aligned (32x32), Horizontal Lines... 160.3 pixels/μs
+  Word-aligned (32x32), Vertical Lines... 152.59 pixels/μs
+  Word-aligned (32x32), Diagonal Lines... 160.82 pixels/μs
+  Non-aligned (32x32), Checkerboard... 17.9 pixels/μs
+  Non-aligned (32x32), Horizontal Lines... 132.65 pixels/μs
+  Non-aligned (32x32), Vertical Lines... 134.65 pixels/μs
+  Non-aligned (32x32), Diagonal Lines... 126.68 pixels/μs
+
+Results Summary (pixels per microsecond)
+=======================================
+
+| Generator | Configuration | Pattern | Avg Pixels/μs | Max Pixels/μs |
+|-----------|---------------|---------|---------------|---------------|
+| javascript | Small (32x32) | Checkerboard |          15.3 |        106.39 |
+| javascript | Small (32x32) | Horizontal Lines |        145.85 |        160.63 |
+| javascript | Small (32x32) | Vertical Lines |        162.02 |        163.84 |
+| javascript | Small (32x32) | Diagonal Lines |        157.35 |        158.56 |
+| javascript | Medium (128x128) | Checkerboard |         386.5 |        474.33 |
+| javascript | Medium (128x128) | Horizontal Lines |        541.29 |           586 |
+| javascript | Medium (128x128) | Vertical Lines |        526.87 |        588.63 |
+| javascript | Medium (128x128) | Diagonal Lines |        557.11 |        564.15 |
+| javascript | Large (512x512) | Checkerboard |        673.23 |        703.74 |
+| javascript | Large (512x512) | Horizontal Lines |        670.75 |         715.1 |
+| javascript | Large (512x512) | Vertical Lines |        665.52 |        686.99 |
+| javascript | Large (512x512) | Diagonal Lines |        655.51 |         666.4 |
+| javascript | Wide (1024x64) | Checkerboard |        595.74 |        687.44 |
+| javascript | Wide (1024x64) | Horizontal Lines |        657.28 |        703.43 |
+| javascript | Wide (1024x64) | Vertical Lines |        684.64 |         693.5 |
+| javascript | Wide (1024x64) | Diagonal Lines |         676.1 |        688.64 |
+| javascript | Tall (64x1024) | Checkerboard |        570.03 |        608.69 |
+| javascript | Tall (64x1024) | Horizontal Lines |        622.05 |         647.8 |
+| javascript | Tall (64x1024) | Vertical Lines |        643.99 |        666.75 |
+| javascript | Tall (64x1024) | Diagonal Lines |        582.49 |        630.41 |
+| javascript | Word-aligned (32x32) | Checkerboard |        130.81 |        161.69 |
+| javascript | Word-aligned (32x32) | Horizontal Lines |         160.3 |        162.77 |
+| javascript | Word-aligned (32x32) | Vertical Lines |        152.59 |        163.84 |
+| javascript | Word-aligned (32x32) | Diagonal Lines |        160.82 |        163.84 |
+| javascript | Non-aligned (32x32) | Checkerboard |          17.9 |         20.15 |
+| javascript | Non-aligned (32x32) | Horizontal Lines |        132.65 |        134.64 |
+| javascript | Non-aligned (32x32) | Vertical Lines |        134.65 |        136.43 |
+| javascript | Non-aligned (32x32) | Diagonal Lines |        126.68 |        134.64 |
+
+JavaScript vs WebAssembly Comparison
+===================================
+
+| Configuration | Pattern | JS Pixels/μs | WASM Pixels/μs | WASM/JS Ratio |
+|---------------|---------|--------------|----------------|---------------|
+
+SharedArrayBuffer Performance Test
+=================================
+
+Running SharedArrayBuffer benchmark...
+Using zero-copy WebAssembly execution with SharedArrayBuffer
+SharedArrayBuffer performance: 63.3 pixels/μs
+
+</div>
+  
+  <script>
+    // Performance chart
+    const performanceCtx = document.getElementById('performanceChart').getContext('2d');
+    new Chart(performanceCtx, {
+      type: 'bar',
+      data: {
+        labels: [],
+        datasets: [
+          {
+            label: 'JavaScript',
+            data: [],
+            backgroundColor: 'rgba(54, 162, 235, 0.7)',
+            borderColor: 'rgba(54, 162, 235, 1)',
+            borderWidth: 1
+          },
+          {
+            label: 'WebAssembly',
+            data: [],
+            backgroundColor: 'rgba(255, 99, 132, 0.7)',
+            borderColor: 'rgba(255, 99, 132, 1)',
+            borderWidth: 1
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: {
+            beginAtZero: true,
+            title: {
+              display: true,
+              text: 'Pixels per Microsecond'
+            }
+          },
+          x: {
+            title: {
+              display: true,
+              text: 'Configuration - Pattern'
+            }
+          }
+        }
+      }
+    });
+    
+    // Ratio chart
+    const ratioCtx = document.getElementById('ratioChart').getContext('2d');
+    new Chart(ratioCtx, {
+      type: 'bar',
+      data: {
+        labels: [],
+        datasets: [
+          {
+            label: 'WASM/JS Ratio',
+            data: [],
+            backgroundColor: 'rgba(75, 192, 192, 0.7)',
+            borderColor: 'rgba(75, 192, 192, 1)',
+            borderWidth: 1
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: {
+            beginAtZero: true,
+            title: {
+              display: true,
+              text: 'Ratio (higher is better for WASM)'
+            }
+          },
+          x: {
+            title: {
+              display: true,
+              text: 'Configuration - Pattern'
+            }
+          }
+        }
+      }
+    });
+  </script>
+</body>
+</html>

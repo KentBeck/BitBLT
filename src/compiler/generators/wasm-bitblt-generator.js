@@ -124,7 +124,7 @@ function createImportSection() {
   const fieldNameLen = encodeULEB128(6); // "memory" length
   const fieldName = new Uint8Array([0x6d, 0x65, 0x6d, 0x6f, 0x72, 0x79]); // "memory"
   const importType = new Uint8Array([0x02]); // memory import
-  const limits = new Uint8Array([0x00, 0x01]); // 0x00 = no max, 0x01 = min pages
+  const limits = new Uint8Array([0x03, 0x01, 0x10]); // 0x03 = shared memory with max, 0x01 = min pages, 0x10 = max pages (16)
 
   // Combine all parts
   const importContent = concatUint8Arrays([
@@ -197,24 +197,28 @@ function createCodeSection(options) {
  */
 function generateBitBLTFunctionBody(options) {
   // Local variables
-  const localCount = encodeULEB128(7); // 7 local variables
+  const localCount = encodeULEB128(9); // 9 local variables
 
   // Local variable types
   const localTypes = concatUint8Arrays([
     encodeULEB128(1),
-    new Uint8Array([ValueType.I32]), // srcWidthInUint32
+    new Uint8Array([ValueType.I32]), // srcWidthInUint32 (local 11)
     encodeULEB128(1),
-    new Uint8Array([ValueType.I32]), // dstWidthInUint32
+    new Uint8Array([ValueType.I32]), // dstWidthInUint32 (local 12)
     encodeULEB128(1),
-    new Uint8Array([ValueType.I32]), // y
+    new Uint8Array([ValueType.I32]), // y (local 13)
     encodeULEB128(1),
-    new Uint8Array([ValueType.I32]), // srcYPos
+    new Uint8Array([ValueType.I32]), // srcYPos (local 14)
     encodeULEB128(1),
-    new Uint8Array([ValueType.I32]), // dstYPos
+    new Uint8Array([ValueType.I32]), // dstYPos (local 15)
     encodeULEB128(1),
-    new Uint8Array([ValueType.I32]), // x
+    new Uint8Array([ValueType.I32]), // x (local 16)
     encodeULEB128(1),
-    new Uint8Array([ValueType.I32]), // srcBit
+    new Uint8Array([ValueType.I32]), // srcBit (local 17)
+    encodeULEB128(1),
+    new Uint8Array([ValueType.I32]), // dstBitPos (local 18)
+    encodeULEB128(1),
+    new Uint8Array([ValueType.I32]), // temp (local 19)
   ]);
 
   // Function code
@@ -354,8 +358,10 @@ function generateBitBLTFunctionBody(options) {
   code.push(Opcodes.I32_CONST, ...encodeSLEB128(31));
   code.push(Opcodes.I32_AND); // dstXPos & 31
 
-  // Load dstBuffer[dstElementIndex]
+  // Store dstBitPos in local 18
   code.push(Opcodes.LOCAL_TEE, ...encodeULEB128(18)); // Store dstBitPos temporarily
+
+  // Calculate dstElementIndex
   code.push(Opcodes.LOCAL_GET, ...encodeULEB128(5)); // dstBuffer
   code.push(Opcodes.LOCAL_GET, ...encodeULEB128(7)); // dstX
   code.push(Opcodes.LOCAL_GET, ...encodeULEB128(16)); // x
@@ -369,7 +375,10 @@ function generateBitBLTFunctionBody(options) {
   code.push(Opcodes.I32_CONST, ...encodeSLEB128(2));
   code.push(Opcodes.I32_SHL); // Multiply by 4 (bytes per i32)
   code.push(Opcodes.I32_ADD);
+
+  // Load dstBuffer[dstElementIndex] and store in local 19 (temp)
   code.push(Opcodes.I32_LOAD, 0x02, 0x00); // alignment=2 (4 bytes), offset=0
+  code.push(Opcodes.LOCAL_SET, ...encodeULEB128(19)); // Store in temp
 
   // Check if srcBit is 1
   code.push(Opcodes.LOCAL_GET, ...encodeULEB128(17)); // srcBit
@@ -380,20 +389,24 @@ function generateBitBLTFunctionBody(options) {
   code.push(Opcodes.IF, 0x40); // if with no return type
 
   // If srcBit is 1, set the bit: dstBuffer[dstElementIndex] |= (1 << dstBitPos)
+  code.push(Opcodes.LOCAL_GET, ...encodeULEB128(19)); // Load temp (current value)
   code.push(Opcodes.I32_CONST, ...encodeSLEB128(1));
   code.push(Opcodes.LOCAL_GET, ...encodeULEB128(18)); // dstBitPos
   code.push(Opcodes.I32_SHL);
   code.push(Opcodes.I32_OR);
+  code.push(Opcodes.LOCAL_SET, ...encodeULEB128(19)); // Store back to temp
 
   code.push(Opcodes.ELSE);
 
   // If srcBit is 0, clear the bit: dstBuffer[dstElementIndex] &= ~(1 << dstBitPos)
+  code.push(Opcodes.LOCAL_GET, ...encodeULEB128(19)); // Load temp (current value)
   code.push(Opcodes.I32_CONST, ...encodeSLEB128(1));
   code.push(Opcodes.LOCAL_GET, ...encodeULEB128(18)); // dstBitPos
   code.push(Opcodes.I32_SHL);
   code.push(Opcodes.I32_CONST, ...encodeSLEB128(-1));
   code.push(Opcodes.I32_XOR);
   code.push(Opcodes.I32_AND);
+  code.push(Opcodes.LOCAL_SET, ...encodeULEB128(19)); // Store back to temp
 
   code.push(Opcodes.END); // end if
 
@@ -411,6 +424,7 @@ function generateBitBLTFunctionBody(options) {
   code.push(Opcodes.I32_CONST, ...encodeSLEB128(2));
   code.push(Opcodes.I32_SHL); // Multiply by 4 (bytes per i32)
   code.push(Opcodes.I32_ADD);
+  code.push(Opcodes.LOCAL_GET, ...encodeULEB128(19)); // Load the result from temp
   code.push(Opcodes.I32_STORE, 0x02, 0x00); // alignment=2 (4 bytes), offset=0
 
   // Increment x
