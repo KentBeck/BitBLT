@@ -12,3 +12,6 @@ Items will be added when you tell me "to do" something.
 7. shift y
 8. rules
 9. mask
+10. performance benchmarks
+11. that christopher glaser approach of detecting optimizations
+12. intermediate language with backends for WASM, x86, and ARM
